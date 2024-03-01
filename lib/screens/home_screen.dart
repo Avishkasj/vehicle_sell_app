@@ -31,7 +31,7 @@ class _HomePageState extends State<HomePage> {
       }
 
       // Fetch data from the second API
-      var response2 = await http.get(Uri.parse('https://vehicle.futuretechbay.com/myapp/scrape?city=colombo&type_of_car=&make=toyota&registration=registered'));
+      var response2 = await http.get(Uri.parse('https://vehicle.futuretechbay.com/myapp/scrape?city=&type_of_car=&make=&registration=registered'));
       if (response2.statusCode == 200) {
         Map<String, dynamic> data2 = json.decode(response2.body);
         List<Map<String, dynamic>> formattedData2 = data2['results'].cast<Map<String, dynamic>>();
@@ -108,66 +108,65 @@ class _HomePageState extends State<HomePage> {
         ),
       ),
 
-      body: GridView.builder(
-        gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
-          maxCrossAxisExtent: 300, // Set the maximum width of each card
-          crossAxisSpacing: 5.0,
-          mainAxisSpacing: 5.0,
+      body: RefreshIndicator(
+        onRefresh: fetchData,
+        child: GridView.builder(
+          gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
+            maxCrossAxisExtent: 300, // Set the maximum width of each card
+            crossAxisSpacing: 5.0,
+            mainAxisSpacing: 5.0,
+          ),
+          itemCount: adsData.length,
+          itemBuilder: (context, index) {
+            return GestureDetector(
+              onTap: () {
+                // Handle ad tap
+              },
+              child: Card(
+                elevation: 3, // Add elevation for a shadow effect
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10.0), // Adjust card border radius
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    AspectRatio(
+                      aspectRatio: 16 / 9, // Set the aspect ratio for the image
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.vertical(top: Radius.circular(10.0)), // Adjust image border radius
+                        child: Image.network(
+                          adsData[index]['image_url'] ?? '',
+                          fit: BoxFit.cover, // Ensure the image covers the space
+                        ),
+                      ),
+                    ),
+                    SizedBox(height: 8), // Add space between image and text content
+                    Expanded(
+                      child: Padding(
+                        padding: EdgeInsets.symmetric(horizontal: 8.0), // Adjust padding as needed
+                        child: ListView(
+                          children: [
+                            Text(
+                              adsData[index]['title'] ?? '',
+                              style: TextStyle(fontWeight: FontWeight.bold),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            Text(adsData[index]['date_time'] ?? ''),
+                            Text(adsData[index]['price'] ?? ''),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
         ),
-        itemCount: adsData.length,
-        itemBuilder: (context, index) {
-          return GestureDetector(
-            onTap: () {
-              // Handle ad tap
-            },
-            child: Card(
-              elevation: 3, // Add elevation for a shadow effect
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(10.0), // Adjust card border radius
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  AspectRatio(
-                    aspectRatio: 16 / 9, // Set the aspect ratio for the image
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.vertical(top: Radius.circular(10.0)), // Adjust image border radius
-                      child: Image.network(
-                        adsData[index]['image_url'] ?? '',
-                        fit: BoxFit.cover, // Ensure the image covers the space
-                      ),
-                    ),
-                  ),
-                  SizedBox(height: 8), // Add space between image and text content
-                  Expanded(
-                    child: Padding(
-                      padding: EdgeInsets.symmetric(horizontal: 8.0), // Adjust padding as needed
-                      child: ListView(
-                        children: [
-                          Text(
-                            adsData[index]['title'] ?? '',
-                            style: TextStyle(fontWeight: FontWeight.bold),
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                          Text(adsData[index]['date_time'] ?? ''),
-                          Text(adsData[index]['price'] ?? ''),
-                        ],
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-
-
-          );
-        },
       ),
-
-
-
     );
   }
+
 }
 
 void main() {
