@@ -60,7 +60,7 @@ class _HomePageState extends State<HomePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: PreferredSize(
-        preferredSize: Size.fromHeight(60.0),
+        preferredSize: Size.fromHeight(70.0),
         child: AppBar(
           backgroundColor: Color(0xFF4FAEAC),
           title: Text('Home'),
@@ -72,7 +72,7 @@ class _HomePageState extends State<HomePage> {
                 color: Colors.white,
               ),
               child: IconButton(
-                icon: Icon(Icons.search, color: Color(0xFF4FAEAC)),
+                icon: Icon(Icons.refresh, color: Color(0xFF4FAEAC)),
                 onPressed: () {
                   _refreshAds();
                 },
@@ -165,6 +165,7 @@ class _HomePageState extends State<HomePage> {
         ),
       ),
       floatingActionButton: FloatingActionButton(
+        backgroundColor: Color(0xFF4FAEAC),
         onPressed: () async {
           final result = await Navigator.push(
             context,
@@ -189,7 +190,7 @@ class _HomePageState extends State<HomePage> {
           );
         },
 
-        child: Icon(Icons.search),
+        child: Icon(Icons.search,color:Colors.white,size: 40,),
       ),
     );
   }
