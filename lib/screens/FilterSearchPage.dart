@@ -12,29 +12,29 @@ class FilterSearchPage extends StatefulWidget {
 class _FilterSearchPageState extends State<FilterSearchPage> {
   String searchText = '';
   List<String> makeOptions = [
-    'Select Make',
-    'Toyota',
-    'Suzuki',
+    '',
+    'toyota',
+    'suzuki',
     // Other make options...
   ];
 
   List<String> typeOptions = [
-    'Any Type',
-    'Car',
-    'Van',
+    '',
+    'cars',
+    'vans',
     // Other type options...
   ];
 
   List<String> cityOptions = [
-    'Any City',
+    '',
     'Colombo District',
-    'Colombo',
+    'colombo',
     // Other city options...
   ];
 
-  String selectedMake = 'Select Make';
-  String selectedType = 'Any Type';
-  String selectedCity = 'Any City';
+  String selectedMake = '';
+  String selectedType = '';
+  String selectedCity = '';
 
   @override
   Widget build(BuildContext context) {
@@ -128,6 +128,7 @@ class _FilterSearchPageState extends State<FilterSearchPage> {
                 widget.onSearch(selectedMake, selectedType, selectedCity);
                 Navigator.pop(context); // Close the filter page
               },
+
               style: ButtonStyle(
                 backgroundColor: MaterialStateProperty.all<Color>(Color(0xFF4FAEAC)),
                 shape: MaterialStateProperty.all<OutlinedBorder>(

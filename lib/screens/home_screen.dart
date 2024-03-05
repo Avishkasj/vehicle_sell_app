@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'package:html/parser.dart' as parser;
+import 'package:html/dom.dart' as dom;
 import 'FilterSearchPage.dart';
 
 class HomePage extends StatefulWidget {
@@ -10,6 +12,9 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   List<Map<String, dynamic>> adsData = [];
+  var selectedMake = '';
+  var selectedType = '';
+  var selectedCity= '';
 
   @override
   void initState() {
@@ -19,32 +24,100 @@ class _HomePageState extends State<HomePage> {
 
   Future<void> fetchData() async {
     try {
-      // Fetch data from the first API
-      var response1 = await http.get(Uri.parse(
-          'https://vehicle.futuretechbay.com/myapp/ikman_ads?region&category=&query=vehicles'));
-      if (response1.statusCode == 200) {
-        List<dynamic> data1 = json.decode(response1.body);
-        List<Map<String, dynamic>> formattedData1 =
-            data1.cast<Map<String, dynamic>>();
-        setState(() {
-          adsData.addAll(formattedData1);
-        });
-      }
-
-      // Fetch data from the second API
-      var response2 = await http.get(Uri.parse(
-          'https://vehicle.futuretechbay.com/myapp/scrape?city=&type_of_car=&make=&registration=registered'));
-      if (response2.statusCode == 200) {
-        Map<String, dynamic> data2 = json.decode(response2.body);
-        List<Map<String, dynamic>> formattedData2 =
-            data2['results'].cast<Map<String, dynamic>>();
-        setState(() {
-          adsData.addAll(formattedData2);
-        });
-      }
+      await fetchIkmanAds(selectedMake ,'', 'colombo',selectedMake+' '+selectedType);
+      await  fetchRiyasewanaAds(selectedMake ,selectedType, 'colombo','');
     } catch (e) {
       print("Error fetching data: $e");
     }
+  }
+
+  Future<void> fetchIkmanAds(String selectedMake, String selectedType, String selectedCity,String quary) async {
+    print('running----------1');
+    try {
+      var encodedCity = Uri.encodeComponent(selectedCity);
+      var encodedType = Uri.encodeComponent(selectedType);
+      var encodedMake = Uri.encodeComponent(selectedMake);
+      var encodedQuary = Uri.encodeComponent(quary);
+      var response = await http.get(Uri.parse(
+          'https://ikman.lk/en/ads/$encodedCity/vehicles?sort=relevance&buy_now=0&urgent=0&query=$quary&page=1'));
+      if (response.statusCode == 200) {
+        final document = parser.parse(response.body);
+        List<Map<String, dynamic>> ikmanAds = extractIkmanAds(document);
+        setState(() {
+          adsData.addAll(ikmanAds);
+        });
+      }
+    } catch (e) {
+      print("Error fetching Ikman ads: $e");
+    }
+  }
+
+  List<Map<String, dynamic>> extractIkmanAds(dom.Document document) {
+    List<Map<String, dynamic>> ads = [];
+    var adElements = document.querySelectorAll('li.normal--2QYVk');
+    for (var adElement in adElements) {
+      Map<String, dynamic> adData = {};
+      adData['title'] =
+          adElement.querySelector('h2.heading--2eONR')?.text ?? 'Title Not Available';
+      adData['price'] =
+          adElement.querySelector('div.price--3SnqI')?.text ?? 'Price Not Available';
+      adData['location'] =
+          adElement.querySelector('div.description--2-ez3')?.text ?? 'Location Not Available';
+      adData['time_date'] =
+          adElement.querySelector('div.updated-time--1DbCk')?.text ?? 'Time and Date Not Available';
+      adData['image_url'] = adElement.querySelector('img.normal-ad--1TyjD')?.attributes['src'] ??
+          'Image Not Available';
+      adData['source'] = 'ikman.lk';
+      ads.add(adData);
+    }
+    return ads;
+  }
+
+  Future<void> fetchRiyasewanaAds(String selectedMake, String selectedType, String selectedCity,String search) async {
+    print('running----------2');
+    try {
+      var encodedCity = Uri.encodeComponent(selectedCity);
+      var encodedType = Uri.encodeComponent(selectedType);
+      var encodedMake = Uri.encodeComponent(selectedMake);
+      var encodedSearch = Uri.encodeComponent(search);
+
+      var response = await http.get(Uri.parse(
+          'https://riyasewana.com/search/$encodedType/$encodedMake/$encodedSearch/$encodedCity'));
+
+      if (response.statusCode == 200) {
+        final document = parser.parse(response.body);
+        List<Map<String, dynamic>> riyasewanaAds = extractRiyasewanaAds(document);
+        setState(() {
+          adsData.addAll(riyasewanaAds);
+        });
+      }
+    } catch (e) {
+      print("Error scraping Riyasewana: $e");
+    }
+  }
+
+
+  List<Map<String, dynamic>> extractRiyasewanaAds(dom.Document document) {
+    List<Map<String, dynamic>> ads = [];
+    var adElements = document.querySelectorAll('li.item.round');
+    for (var adElement in adElements) {
+      Map<String, dynamic> adData = {};
+      adData['title'] = adElement.querySelector('h2.more a')?.attributes['title'] ??
+          'Title Not Available';
+      adData['link'] =
+          adElement.querySelector('h2.more a')?.attributes['href'] ?? 'Link Not Available';
+      adData['date_time'] =
+          adElement.querySelector('h2[style="font-size:13px;text-align:center;color:#636b75;'
+              'font-weight:normal;padding:0 0 5px 0;line-height:1.3em;"]')
+              ?.text ??
+              'Date and Time Not Available';
+      adData['price'] = adElement.querySelector('div.boxintxt.b')?.text ?? 'Price Not Available';
+      adData['image_url'] = 'https:' +
+          (adElement.querySelector('img')?.attributes['src'] ?? 'Image Not Available');
+      adData['source'] = 'riyasewana';
+      ads.add(adData);
+    }
+    return ads;
   }
 
   Future<void> _refreshAds() async {
@@ -54,8 +127,6 @@ class _HomePageState extends State<HomePage> {
     await fetchData(); // Fetch new ads data
   }
 
-
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -63,7 +134,7 @@ class _HomePageState extends State<HomePage> {
         preferredSize: Size.fromHeight(70.0),
         child: AppBar(
           backgroundColor: Color(0xFF4FAEAC),
-          title: Text('Home'),
+          title: Text('Home',style: TextStyle(color: Colors.white,fontWeight: FontWeight.bold,),),
           actions: [
             Container(
               margin: EdgeInsets.all(8),
@@ -75,6 +146,13 @@ class _HomePageState extends State<HomePage> {
                 icon: Icon(Icons.refresh, color: Color(0xFF4FAEAC)),
                 onPressed: () {
                   _refreshAds();
+                  setState(() {
+                    adsData.clear(); // Clear the existing ads data
+                    selectedMake = '';
+                    selectedType='';// Reset selected make
+                    //selectedType = null; // Reset selected type
+                    //selectedCity = null; // Reset selected city
+                  });
                 },
               ),
             ),
@@ -111,7 +189,7 @@ class _HomePageState extends State<HomePage> {
         onRefresh: _refreshAds,
         child: GridView.builder(
           gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
-            maxCrossAxisExtent: 300,
+            maxCrossAxisExtent: MediaQuery.of(context).size.width / 2, // Adjust this value as needed
             crossAxisSpacing: 5.0,
             mainAxisSpacing: 5.0,
           ),
@@ -133,7 +211,7 @@ class _HomePageState extends State<HomePage> {
                       aspectRatio: 16 / 9,
                       child: ClipRRect(
                         borderRadius:
-                            BorderRadius.vertical(top: Radius.circular(10.0)),
+                        BorderRadius.vertical(top: Radius.circular(10.0)),
                         child: Image.network(
                           adsData[index]['image_url'] ?? '',
                           fit: BoxFit.cover,
@@ -151,7 +229,7 @@ class _HomePageState extends State<HomePage> {
                               style: TextStyle(fontWeight: FontWeight.bold),
                               overflow: TextOverflow.ellipsis,
                             ),
-                            Text(adsData[index]['date_time'] ?? ''),
+                            Text(adsData[index]['source'] ?? ''),
                             Text(adsData[index]['price'] ?? ''),
                           ],
                         ),
@@ -163,6 +241,7 @@ class _HomePageState extends State<HomePage> {
             );
           },
         ),
+
       ),
       floatingActionButton: FloatingActionButton(
         backgroundColor: Color(0xFF4FAEAC),
@@ -172,18 +251,12 @@ class _HomePageState extends State<HomePage> {
             MaterialPageRoute(
               builder: (context) => FilterSearchPage(
                 onSearch: (selectedMake, selectedType, selectedCity) {
-                  // Implement your filtering logic here
-                  print('Selected Make: $selectedMake');
-                  print('Selected Type: $selectedType');
-                  print('Selected City: $selectedCity');
-
-                  // Check if the selected city is 'aa'
-                  if (selectedCity != 'Any City' || selectedType != 'Any Type' || selectedMake != 'Select Make' ) {
+                  setState(() {
+                    this.selectedMake = selectedMake;
+                    this.selectedType = selectedType;
+                    // Perform filtering based on the selected filters
                     _refreshAds();
-                    // Perform actions specific to the selected city 'aa'
-                  } else {
-                    // Perform actions for other selected cities
-                  }
+                  });
                 },
               ),
             ),
