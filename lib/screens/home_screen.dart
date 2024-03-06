@@ -112,6 +112,7 @@ class _HomePageState extends State<HomePage> {
               ?.text ??
               'Date and Time Not Available';
       adData['price'] = adElement.querySelector('div.boxintxt.b')?.text ?? 'Price Not Available';
+      adData['location'] = adElement.querySelector('div.boxintxt')?.text ?? 'Price Not Available';
       adData['image_url'] = 'https:' +
           (adElement.querySelector('img')?.attributes['src'] ?? 'Image Not Available');
       adData['source'] = 'riyasewana';
@@ -229,8 +230,40 @@ class _HomePageState extends State<HomePage> {
                               style: TextStyle(fontWeight: FontWeight.bold),
                               overflow: TextOverflow.ellipsis,
                             ),
-                            Text(adsData[index]['source'] ?? ''),
-                            Text(adsData[index]['price'] ?? ''),
+                            // Text(adsData[index]['source'] ?? ''),
+
+
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Text(
+                                  adsData[index]['price'] ?? '',
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 14,
+                                  ),
+                                ),
+                                // Text(
+                                //   adsData[index]['source'] ?? '',
+                                //   style: TextStyle(fontSize: 12),
+                                // ),
+                                if (adsData[index]['source'] == 'riyasewana')
+                                  Container(
+                                   height: 30,
+                                    child: Image.asset('lib/assets/riyasewana.png'),
+                                  ),
+                                if (adsData[index]['source'] == 'ikman.lk')
+                                  Container(
+                                    width: 30,
+                                    child: Image.asset('lib/assets/ikman.png'),
+                                  ),
+
+
+                              ],
+                            ),
+
+
+                            Text(adsData[index]['location'] ?? ''),
                           ],
                         ),
                       ),
